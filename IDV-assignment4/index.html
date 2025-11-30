@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Adversarial Robustness Heatmap</title>
+		<style>
+			:root {
+				color-scheme: dark;
+				font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
+					"Helvetica Neue", sans-serif;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				margin: 0;
+				min-height: 100vh;
+				background: radial-gradient(circle at top, #101828, #020811);
+				color: #f1f5f9;
+			}
+
+			main {
+				max-width: 1200px;
+				margin: 0 auto;
+				padding: 32px 24px 64px;
+			}
+
+			h1 {
+				font-size: clamp(2rem, 3vw, 2.75rem);
+				margin: 0 0 0.5rem;
+			}
+
+			p.description {
+				margin: 0 0 1.75rem;
+				color: #cbd5f5;
+				max-width: 70ch;
+				line-height: 1.5;
+			}
+
+			.controls {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.75rem;
+				margin-bottom: 1.5rem;
+			}
+
+			.controls button {
+				border: 1px solid rgba(148, 163, 184, 0.4);
+				background: rgba(15, 23, 42, 0.75);
+				color: #e2e8f0;
+				padding: 0.65rem 1rem;
+				border-radius: 999px;
+				font-size: 0.95rem;
+				font-weight: 600;
+				cursor: pointer;
+				transition: all 200ms ease;
+				backdrop-filter: blur(6px);
+			}
+
+			.controls button:hover {
+				border-color: #22d3ee;
+				color: #f0fdf4;
+			}
+
+			.controls button.is-active {
+				background: linear-gradient(120deg, #22d3ee, #3b82f6);
+				color: #081526;
+				border-color: transparent;
+				box-shadow: 0 10px 30px rgba(59, 130, 246, 0.35);
+			}
+
+			.chart-card {
+				position: relative;
+				background: rgba(15, 23, 42, 0.85);
+				border-radius: 20px;
+				padding: 1.5rem;
+				border: 1px solid rgba(148, 163, 184, 0.2);
+				box-shadow:
+					0 20px 60px rgba(2, 8, 27, 0.7),
+					inset 0 1px 0 rgba(255, 255, 255, 0.04);
+			}
+
+			#chart {
+				position: relative;
+			}
+
+			svg {
+				width: 100%;
+				height: auto;
+				display: block;
+				font-family: inherit;
+			}
+
+			.axis text {
+				fill: #cbd5f5;
+				font-size: 0.85rem;
+			}
+
+			.axis line,
+			.axis path {
+				stroke: rgba(226, 232, 240, 0.35);
+			}
+
+			.heatmap-cell {
+				stroke: rgba(15, 15, 35, 0.4);
+				stroke-width: 1px;
+				cursor: pointer;
+				transition: stroke 150ms ease;
+			}
+
+			.heatmap-cell.is-hovered {
+				stroke: #f8fafc;
+				stroke-width: 2px;
+			}
+
+			.tooltip {
+				position: absolute;
+				pointer-events: none;
+				left: 0;
+				top: 0;
+				background: rgba(2, 6, 23, 0.9);
+				border: 1px solid rgba(226, 232, 240, 0.2);
+				color: #f8fafc;
+				padding: 0.6rem 0.85rem;
+				border-radius: 12px;
+				font-size: 0.9rem;
+				box-shadow: 0 10px 30px rgba(15, 23, 42, 0.55);
+				opacity: 0;
+				transition: opacity 120ms ease;
+				z-index: 5;
+			}
+
+			.button-tooltip {
+				position: fixed;
+				pointer-events: none;
+				background: rgba(15, 23, 42, 0.95);
+				border: 1px solid rgba(148, 163, 184, 0.35);
+				color: #e2e8f0;
+				padding: 0.65rem 0.9rem;
+				border-radius: 12px;
+				font-size: 0.9rem;
+				box-shadow: 0 15px 35px rgba(2, 6, 23, 0.45);
+				opacity: 0;
+				transition: opacity 120ms ease;
+				z-index: 20;
+				max-width: min(320px, 80vw);
+				line-height: 1.4;
+			}
+
+			.legend text {
+				fill: #cbd5f5;
+				font-size: 0.85rem;
+			}
+
+			.legend-title {
+				font-size: 0.9rem;
+				font-weight: 600;
+				letter-spacing: 0.04em;
+				text-transform: uppercase;
+				fill: #94a3b8;
+			}
+
+			.status-message {
+				color: #f87171;
+				font-weight: 600;
+				margin-top: 1rem;
+			}
+
+			@media (max-width: 768px) {
+				.controls button {
+					flex: 1 1 100%;
+					text-align: center;
+				}
+
+				.chart-card {
+					padding: 1.25rem 0.75rem 1.5rem;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<h1>Adversarial Robustness Heatmap</h1>
+			<p class="description">
+				Interactive comparison of defence methods under assorted adversarial attacks.
+				Hover over any cell to inspect detailed accuracy values, or switch sorting
+				strategies to highlight different robustness stories.
+			</p>
+
+			<div class="controls" role="group" aria-label="Sorting modes">
+				<button class="control-button" data-mode="global">Global robustness ranking</button>
+				<button class="control-button" data-mode="tradeoff">Clean vs robust trade-off</button>
+				<button class="control-button" data-mode="gain">Robustness gain vs ERM</button>
+			</div>
+
+			<section class="chart-card" aria-live="polite">
+				<div id="chart"></div>
+				<div id="tooltip" class="tooltip" role="status" aria-live="polite"></div>
+			</section>
+		</main>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" integrity="sha512-vc58qvvBdrDR4etbxMdlTt4GBQk1qjvyORR2nrsPsFPyrs+/u5c3+1Ct6upOgdZoIl7eq6k3a1UPDSNAQi/32A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+		<script>
+			(function () {
+				const chartContainer = document.getElementById("chart");
+				const chartCard = document.querySelector(".chart-card");
+				const tooltip = d3.select("#tooltip");
+				const buttons = document.querySelectorAll(".control-button");
+				const buttonTooltip = d3
+					.select("body")
+					.append("div")
+					.attr("id", "button-tooltip")
+					.attr("class", "button-tooltip")
+					.attr("role", "tooltip")
+					.attr("aria-hidden", "true");
+
+				const buttonDescriptions = {
+					global:
+						"Ranks attacks by their average accuracy (lower = stronger attack) and defences by their overall mean accuracy (higher = stronger defender) so you can spot the toughest threats and most reliable methods.",
+					tradeoff:
+						"Highlights the clean-versus-robust trade-off: methods are sorted by their average accuracy on adversarial rows while keeping the 'No Attack' baseline on top for a quick clean reference.",
+					gain:
+						"Shows which attacks benefit most from specialised training compared to ERM by sorting rows on the gain between the best robust method and ERM, using the global defence ranking for columns.",
+				};
+
+				// Helper to toggle button states
+				function setActiveButton(mode) {
+					buttons.forEach((btn) => {
+						btn.classList.toggle("is-active", btn.dataset.mode === mode);
+					});
+				}
+
+				// Render heatmap once the JSON data is loaded
+				fetch("data.json")
+					.then((response) => {
+						if (!response.ok) {
+							throw new Error(`Unable to load data.json (status ${response.status})`);
+						}
+						return response.json();
+					})
+					.then(renderHeatmap)
+					.catch((error) => {
+						console.error(error);
+						d3.select(chartContainer)
+							.append("p")
+							.attr("class", "status-message")
+							.text("Failed to load dataset. Please verify that data.json is reachable.");
+					});
+
+				/**
+				 * Builds the heatmap, legend, tooltip interactions, and ordering logic.
+				 * Assumes every attack row contains the same defence method keys as noted
+				 * in data.json; mismatches will be ignored gracefully.
+				 */
+				function renderHeatmap(rawData) {
+					const originalAttackOrder = Object.keys(rawData);
+					const methods = Object.keys(rawData[originalAttackOrder[0]]);
+
+					const matrix = originalAttackOrder.flatMap((attack) =>
+						methods.map((method) => ({
+							attack,
+							method,
+							value: rawData[attack][method],
+						}))
+					);
+
+					const margin = { top: 140, right: 32, bottom: 130, left: 210 };
+					const cellWidth = 90;
+					const cellHeight = 34;
+					const innerWidth = methods.length * cellWidth;
+					const innerHeight = originalAttackOrder.length * cellHeight;
+					const legendHeight = 16;
+					const legendSpacing = 56;
+					const width = margin.left + innerWidth + margin.right;
+					const height = margin.top + innerHeight + margin.bottom + legendSpacing;
+
+					const svg = d3
+						.select(chartContainer)
+						.append("svg")
+						.attr("viewBox", `0 0 ${width} ${height}`)
+						.attr("preserveAspectRatio", "xMidYMid meet")
+						.attr("role", "img")
+						.attr(
+							"aria-label",
+							"Heatmap showing defence accuracy for each adversarial attack"
+						);
+
+					const defs = svg.append("defs");
+					const gradient = defs
+						.append("linearGradient")
+						.attr("id", "legend-gradient")
+						.attr("x1", "0%")
+						.attr("x2", "100%")
+						.attr("y1", "0%")
+						.attr("y2", "0%");
+
+					const heatmap = svg
+						.append("g")
+						.attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+					const x = d3.scaleBand().range([0, innerWidth]).paddingInner(0.08);
+					const y = d3.scaleBand().range([0, innerHeight]).paddingInner(0.08);
+					const colorScale = d3.scaleSequential(d3.interpolateYlGnBu).domain([0, 100]);
+
+					// Fill gradient for legend (0% light to 100% dark)
+					d3.range(0, 1.01, 0.1).forEach((t) => {
+						gradient
+							.append("stop")
+							.attr("offset", `${t * 100}%`)
+							.attr("stop-color", colorScale(t * 100));
+					});
+
+					const xAxisGroup = svg
+						.append("g")
+						.attr("class", "axis axis--x")
+						.attr("transform", `translate(${margin.left}, ${margin.top - 15})`);
+
+					const yAxisGroup = svg
+						.append("g")
+						.attr("class", "axis axis--y")
+						.attr("transform", `translate(${margin.left - 10}, ${margin.top})`);
+
+					const legendGroup = svg
+						.append("g")
+						.attr("class", "legend")
+						.attr("transform", `translate(${margin.left}, ${margin.top + innerHeight + 35})`);
+
+					const legendWidth = Math.min(360, innerWidth);
+					legendGroup
+						.append("text")
+						.attr("class", "legend-title")
+						.attr("x", 0)
+						.attr("y", -10)
+						.text("Accuracy (%)");
+
+					legendGroup
+						.append("rect")
+						.attr("width", legendWidth)
+						.attr("height", legendHeight)
+						.attr("rx", 8)
+						.attr("fill", "url(#legend-gradient)");
+
+					const legendScale = d3.scaleLinear().domain(colorScale.domain()).range([0, legendWidth]);
+					const legendAxis = d3.axisBottom(legendScale).ticks(5).tickFormat((d) => `${d}%`);
+
+					legendGroup
+						.append("g")
+						.attr("transform", `translate(0, ${legendHeight})`)
+						.call(legendAxis)
+						.call((g) => g.select(".domain").remove());
+
+					let currentMethodOrder = methods.slice();
+					let currentAttackOrder = originalAttackOrder.slice();
+					x.domain(currentMethodOrder);
+					y.domain(currentAttackOrder);
+
+					const cells = heatmap
+						.selectAll(".heatmap-cell")
+						.data(matrix, (d) => `${d.attack}|${d.method}`)
+						.enter()
+						.append("rect")
+						.attr("class", "heatmap-cell")
+						.attr("rx", 6)
+						.attr("ry", 6)
+						.attr("x", (d) => x(d.method))
+						.attr("y", (d) => y(d.attack))
+						.attr("width", x.bandwidth())
+						.attr("height", y.bandwidth())
+						.attr("fill", (d) => colorScale(d.value));
+
+					const xAxis = d3.axisTop(x).tickSize(0).tickPadding(12);
+					const yAxis = d3.axisLeft(y).tickSize(0).tickPadding(8);
+
+					function drawAxes(transition) {
+						const xSelection = transition ? xAxisGroup.transition(transition) : xAxisGroup;
+						xSelection.call(xAxis);
+						xAxisGroup
+							.selectAll("text")
+							.style("text-anchor", "start")
+							.attr("transform", "rotate(-45)")
+							.attr("dx", "0.4em")
+							.attr("dy", "-0.7em");
+
+						const ySelection = transition ? yAxisGroup.transition(transition) : yAxisGroup;
+						ySelection.call(yAxis);
+					}
+
+					drawAxes();
+
+					cells
+						.on("mouseenter", function () {
+							d3.select(this).classed("is-hovered", true);
+							tooltip.style("opacity", 1);
+						})
+						.on("mousemove", function (event, d) {
+							const [xPos, yPos] = d3.pointer(event, chartCard);
+							tooltip
+								.style("left", `${xPos + 20}px`)
+								.style("top", `${yPos - 10}px`)
+								.html(
+									`<strong>${d.attack}</strong><br /><span>${d.method}</span><br /><em>${d.value.toFixed(
+										1
+									)}% accuracy</em>`
+								);
+						})
+						.on("mouseleave", function () {
+							d3.select(this).classed("is-hovered", false);
+							tooltip.style("opacity", 0);
+						});
+
+					// --- Sorting strategies & metrics ---
+					let cachedGlobalOrder = null;
+
+					const orderingStrategies = {
+						global: () => {
+							if (cachedGlobalOrder) {
+								return {
+									attacks: [...cachedGlobalOrder.attacks],
+									methods: [...cachedGlobalOrder.methods],
+								};
+							}
+
+							// Mean accuracy per attack (lower mean ⇒ stronger attack)
+							const attackMeans = originalAttackOrder.map((attack) => ({
+								attack,
+								mean: d3.mean(methods, (method) => rawData[attack][method]),
+							}));
+
+							const attackOrder = attackMeans
+								.sort((a, b) => d3.ascending(a.mean, b.mean))
+								.map((d) => d.attack);
+
+							// Mean accuracy per method (higher mean ⇒ stronger defence)
+							const methodMeans = methods.map((method) => ({
+								method,
+								mean: d3.mean(originalAttackOrder, (attack) => rawData[attack][method]),
+							}));
+
+							const methodOrder = methodMeans
+								.sort((a, b) => d3.descending(a.mean, b.mean))
+								.map((d) => d.method);
+
+							cachedGlobalOrder = { attacks: attackOrder, methods: methodOrder };
+							return { attacks: [...attackOrder], methods: [...methodOrder] };
+						},
+
+						tradeoff: () => {
+							const cleanLabel = "No Attack";
+							const cleanFirst = [
+								cleanLabel,
+								...originalAttackOrder.filter((attack) => attack !== cleanLabel),
+							];
+
+							const attackPool = originalAttackOrder.filter((attack) => attack !== cleanLabel);
+
+							// Clean vs robust statistics for each method (used for sorting)
+							const robustStats = methods.map((method) => ({
+								method,
+								cleanAcc: rawData[cleanLabel]?.[method] ?? 0,
+								robustAcc: attackPool.length
+									? d3.mean(attackPool, (attack) => rawData[attack][method])
+									: rawData[cleanLabel]?.[method] ?? 0,
+							}));
+
+							const methodOrder = robustStats
+								.sort((a, b) => d3.descending(a.robustAcc, b.robustAcc))
+								.map((d) => d.method);
+
+							return { attacks: cleanFirst, methods: methodOrder };
+						},
+
+						gain: () => {
+							const baseline = "ERM";
+							const attackGains = originalAttackOrder.map((attack) => {
+								const row = rawData[attack];
+								const bestRobust = d3.max(
+									methods.filter((method) => method !== baseline),
+									(method) => row[method]
+								);
+								const gain = (bestRobust ?? row[baseline]) - row[baseline];
+								return { attack, gain };
+							});
+
+							const attackOrder = attackGains
+								.sort((a, b) => d3.descending(a.gain, b.gain))
+								.map((d) => d.attack);
+
+							const methodOrder = (cachedGlobalOrder ?? orderingStrategies.global()).methods;
+
+							return { attacks: attackOrder, methods: [...methodOrder] };
+						},
+					};
+
+					function applyOrdering(mode, animate = true) {
+						const strategy = orderingStrategies[mode];
+						if (!strategy) return;
+
+						const orders = strategy();
+						currentMethodOrder = orders.methods;
+						currentAttackOrder = orders.attacks;
+
+						x.domain(currentMethodOrder);
+						y.domain(currentAttackOrder);
+
+						const transition = animate
+							? svg.transition().duration(900).ease(d3.easeCubicInOut)
+							: null;
+
+						const cellSelection = animate ? cells.transition(transition) : cells;
+						cellSelection
+							.attr("x", (d) => x(d.method))
+							.attr("y", (d) => y(d.attack));
+
+						drawAxes(transition);
+					}
+
+					buttons.forEach((button) => {
+						button.addEventListener("click", (event) => {
+							const mode = event.currentTarget.dataset.mode;
+							setActiveButton(mode);
+							applyOrdering(mode);
+						});
+
+						button.addEventListener("mouseenter", (event) => {
+							const mode = event.currentTarget.dataset.mode;
+							const description = buttonDescriptions[mode];
+							if (!description) return;
+							buttonTooltip
+								.html(`<strong>${event.currentTarget.textContent}</strong><br />${description}`)
+								.style("opacity", 1)
+								.attr("aria-hidden", "false");
+						});
+
+						button.addEventListener("mousemove", (event) => {
+							buttonTooltip
+								.style("left", `${event.clientX + 18}px`)
+								.style("top", `${event.clientY + 18}px`);
+						});
+
+						button.addEventListener("mouseleave", () => {
+							buttonTooltip.style("opacity", 0).attr("aria-hidden", "true");
+						});
+					});
+
+					// Initialize with global robustness ranking
+					setActiveButton("global");
+					applyOrdering("global", false);
+				}
+			})();
+		</script>
+	</body>
+</html>

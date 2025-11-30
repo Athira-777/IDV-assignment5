@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IDV Assignments 1-4 Combined</title>
+    <style>
+        :root {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color-scheme: light dark;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(circle at top, #eef2ff, #e2e8f0);
+            color: #0f172a;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            background: linear-gradient(to right, rgba(248, 250, 252, 0.94), rgba(226, 232, 240, 0.9));
+            border-bottom: 1px solid rgba(148, 163, 184, 0.5);
+        }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem 1.5rem;
+        }
+
+        .title-block h1 {
+            margin: 0;
+            font-size: clamp(1.4rem, 2vw, 1.8rem);
+        }
+
+        .title-block p {
+            margin: 0.1rem 0 0;
+            font-size: 0.9rem;
+            color: #4b5563;
+        }
+
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }
+
+        nav a {
+            text-decoration: none;
+            font-size: 0.9rem;
+            padding: 0.45rem 0.8rem;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            color: #111827;
+            background: rgba(248, 250, 252, 0.9);
+            transition: background 150ms ease, border-color 150ms ease, transform 120ms ease;
+        }
+
+        nav a:hover {
+            background: #e0f2fe;
+            border-color: #38bdf8;
+            transform: translateY(-1px);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem 1.5rem 3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        section.assignment {
+            background: rgba(248, 250, 252, 0.95);
+            border-radius: 18px;
+            padding: 1.25rem 1.25rem 1.5rem;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+            border: 1px solid rgba(148, 163, 184, 0.4);
+        }
+
+        .section-heading {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .section-heading h2 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .section-heading span.badge {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 0.25rem 0.65rem;
+            border-radius: 999px;
+            background: #e0f2fe;
+            color: #0369a1;
+            border: 1px solid #7dd3fc;
+            white-space: nowrap;
+        }
+
+        .section-description {
+            margin: 0 0 0.75rem;
+            font-size: 0.9rem;
+            color: #4b5563;
+        }
+
+        .frame-wrapper {
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #0f172a;
+            border: 1px solid rgba(15, 23, 42, 0.8);
+        }
+
+        iframe {
+            display: block;
+            width: 100%;
+            height: min(800px, 90vh);
+            border: none;
+            background: white;
+        }
+
+        .frame-label {
+            position: absolute;
+            inset: auto 0 0 0;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #e5e7eb;
+            background: linear-gradient(to top, rgba(15, 23, 42, 0.9), transparent);
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .frame-label span {
+            opacity: 0.8;
+        }
+
+        footer {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem 2rem;
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+
+        @media (max-width: 768px) {
+            .header-inner {
+                align-items: flex-start;
+            }
+
+            nav {
+                width: 100%;
+            }
+
+            iframe {
+                height: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <div class="title-block">
+                <h1>Interactive Data Visualisation &mdash; Assignments 1-4</h1>
+                <p>Scroll to explore each previous assignment, all embedded into one long page.</p>
+            </div>
+            <nav aria-label="Jump to assignment">
+                <a href="#assignment1">Assignment 1</a>
+                <a href="#assignment2">Assignment 2</a>
+                <a href="#assignment3">Assignment 3</a>
+                <a href="#assignment4">Assignment 4</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section id="assignment1" class="assignment">
+            <div class="section-heading">
+                <h2>Assignment 1 &mdash; Live PSI Table</h2>
+                <span class="badge">From IDV-assignment1/index.html</span>
+            </div>
+            <p class="section-description">
+                Real-time Singapore PSI data fetched from data.gov.sg and displayed as a table per region.
+            </p>
+            <div class="frame-wrapper">
+                <iframe src="IDV-assignment1/index.html" title="Assignment 1: PSI Data"></iframe>
+                <div class="frame-label">
+                    <span>Assignment 1</span>
+                    <span>Embedded page</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="assignment2" class="assignment">
+            <div class="section-heading">
+                <h2>Assignment 2 &mdash; SVG Logo Transformations</h2>
+                <span class="badge">From IDV-assignment2/index.html</span>
+            </div>
+            <p class="section-description">
+                A grid of favourite SVG logos with mirrored, rotated, squeezed, and grayscale variations.
+            </p>
+            <div class="frame-wrapper">
+                <iframe src="IDV-assignment2/index.html" title="Assignment 2: SVG Logos"></iframe>
+                <div class="frame-label">
+                    <span>Assignment 2</span>
+                    <span>Embedded page</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="assignment3" class="assignment">
+            <div class="section-heading">
+                <h2>Assignment 3 &mdash; Sports &amp; Beyond</h2>
+                <span class="badge">From IDV-assignment3/index.html</span>
+            </div>
+            <p class="section-description">
+                Multiple D3 visualisations including sports search trends, grid networks, a Venn diagram,
+                a doodle interaction, and Sweden temperature comparisons.
+            </p>
+            <div class="frame-wrapper">
+                <iframe src="IDV-assignment3/index.html" title="Assignment 3: Visualisations"></iframe>
+                <div class="frame-label">
+                    <span>Assignment 3</span>
+                    <span>Embedded page</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="assignment4" class="assignment">
+            <div class="section-heading">
+                <h2>Assignment 4 &mdash; Adversarial Robustness Heatmap</h2>
+                <span class="badge">From IDV-assignment4/index.html</span>
+            </div>
+            <p class="section-description">
+                Interactive heatmap comparing defence methods under different adversarial attacks with
+                multiple sorting modes and rich tooltips.
+            </p>
+            <div class="frame-wrapper">
+                <iframe src="IDV-assignment4/index.html" title="Assignment 4: Heatmap"></iframe>
+                <div class="frame-label">
+                    <span>Assignment 4</span>
+                    <span>Embedded page</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>
+            Each assignment is rendered from its original standalone HTML file using an iframe. This keeps
+            their CSS and JavaScript isolated while letting you browse everything in a single vertical scroll.
+        </p>
+    </footer>
+</body>
+</html>

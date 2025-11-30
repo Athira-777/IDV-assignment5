@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>SVG Logo Transformations</title>
+		<style>
+			:root {
+				color-scheme: only light;
+			}
+
+			body {
+				margin: 0;
+				padding: 2rem;
+				font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+				background-color: #ffffff;
+				color: #1a1a1a;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 2rem;
+			}
+
+			h1 {
+				margin: 0;
+				font-size: clamp(1.75rem, 2.5vw, 2.5rem);
+				font-weight: 600;
+				text-align: center;
+			}
+
+			p.intro {
+				margin: 0;
+				max-width: 720px;
+				text-align: center;
+				line-height: 1.6;
+			}
+
+			table {
+				border-collapse: collapse;
+				background-color: #ffffff;
+				box-shadow: 0 0 24px rgba(0, 0, 0, 0.04);
+			}
+
+			thead th {
+				font-weight: 600;
+			}
+
+			th,
+			td {
+				border: 1px solid #dedede;
+				padding: 1rem;
+				text-align: center;
+				background-color: #ffffff;
+			}
+
+			th {
+				white-space: nowrap;
+			}
+
+			.logo-preview {
+				width: 120px;
+				max-width: 100%;
+				display: inline-block;
+				transition: transform 150ms ease-in-out;
+			}
+
+			.effect-mirror {
+				transform: scaleX(-1);
+			}
+
+			.effect-rotate {
+				transform: rotate(180deg);
+			}
+
+			.effect-squeeze {
+				transform: scaleY(0.5);
+				transform-origin: center center;
+			}
+
+			.effect-grayscale {
+				filter: grayscale(100%);
+			}
+
+			tbody tr:nth-child(even) td {
+				background-color: #ffffff;
+			}
+
+			@media (max-width: 960px) {
+				table {
+					font-size: 0.9rem;
+				}
+
+				.logo-preview {
+					width: 96px;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<h1>SVG Logo Transformations</h1>
+		<p class="intro">
+			My favorite logos displayed with various transformations :)
+		</p>
+		<table>
+			<thead>
+				<tr>
+					<th>Original</th>
+					<th>Mirrored</th>
+					<th>Rotated 180°</th>
+					<th>Vertical 50%</th>
+					<th>Grayscale</th>
+				</tr>
+			</thead>
+			<tbody id="logo-table-body"></tbody>
+		</table>
+
+		<script>
+			document.addEventListener("DOMContentLoaded", () => {
+				const logoDirectory = "LOGOS";
+				const totalLogos = 10;
+				const tableBody = document.getElementById("logo-table-body");
+
+				const transformations = [
+					{ label: "Original", className: "" },
+					{ label: "Mirrored", className: "effect-mirror" },
+					{ label: "Rotated 180°", className: "effect-rotate" },
+					{ label: "Vertical 50%", className: "effect-squeeze" },
+					{ label: "Grayscale", className: "effect-grayscale" }
+				];
+
+				for (let i = 0; i < totalLogos; i += 1) {
+					const row = document.createElement("tr");
+					const src = `${logoDirectory}/LOGO${i}.svg`;
+
+					transformations.forEach(({ label, className }) => {
+						const cell = document.createElement("td");
+						const img = document.createElement("img");
+						img.src = src;
+						img.alt = `Logo ${i} - ${label}`;
+						img.className = ["logo-preview", className].filter(Boolean).join(" ");
+						cell.appendChild(img);
+						row.appendChild(cell);
+					});
+
+					tableBody.appendChild(row);
+				}
+			});
+		</script>
+	</body>
+</html>

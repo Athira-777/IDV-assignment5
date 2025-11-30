@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Sports Search Trends</title>
+		<style>
+			html,
+			body {
+				height: 100%;
+				margin: 0;
+				background: #ffffff;
+				color: #1f2937;
+				font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+			}
+
+			body {
+				display: flex;
+				justify-content: center;
+				padding: clamp(3rem, 7vw, 6rem) clamp(1.5rem, 4vw, 3rem);
+				background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+			}
+
+			.page {
+				width: min(1400px, 98vw);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: clamp(6rem, 10vw, 9rem);
+			}
+
+			.chart-frame {
+				width: 100%;
+				background: #f9fafb;
+				border: 1px solid #e2e8f0;
+				box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+				padding: clamp(1rem, 3vw, 1.5rem);
+				border-radius: 18px;
+			}
+
+			.note-tile {
+				width: 100%;
+				background: linear-gradient(145deg, #0f172a 0%, #1f2937 45%, #111827 100%);
+				color: #e2e8f0;
+				padding: clamp(1.25rem, 3.5vw, 2rem);
+				border-radius: 18px;
+				box-shadow: 0 18px 36px rgba(15, 23, 42, 0.22);
+				border: 1px solid rgba(148, 163, 184, 0.25);
+			}
+
+			.note-tile h3 {
+				margin: 0 0 0.6rem;
+				font-size: clamp(1.1rem, 1.8vw, 1.35rem);
+				font-weight: 700;
+				letter-spacing: 0.04em;
+				color: #f8fafc;
+			}
+
+			.note-tile p {
+				margin: 0.35rem 0;
+				font-size: clamp(0.92rem, 1.5vw, 1.05rem);
+				line-height: 1.6;
+				color: rgba(226, 232, 240, 0.92);
+			}
+
+			.note-tile p:last-child {
+				margin-bottom: 0;
+			}
+
+			.chart-frame svg {
+				width: 100%;
+				display: block;
+			}
+
+			#line-chart {
+				height: min(680px, 80vh);
+			}
+
+			#grid-chart {
+				height: min(420px, 60vh);
+			}
+
+			#venn-chart {
+				height: auto;
+				max-height: 100%;
+			}
+
+			#doodle-chart {
+				height: min(420px, 60vh);
+			}
+
+			#sweden-temp-chart {
+				height: min(420px, 60vh);
+			}
+
+			.bar {
+				transition: opacity 0.3s ease;
+			}
+
+			.bar-day {
+				fill: #f97316;
+			}
+
+			.bar-night {
+				fill: #2563eb;
+			}
+
+			.bar:focus-visible {
+				outline: 2px solid #0f172a;
+				outline-offset: 2px;
+			}
+
+			.sweden-temp-legend text {
+				fill: #1f2937;
+				font-size: 0.9rem;
+				font-weight: 600;
+			}
+
+			.sweden-temp-legend rect {
+				width: 18px;
+				height: 18px;
+				rx: 4px;
+				ry: 4px;
+			}
+
+			.sweden-temp-tooltip {
+				position: fixed;
+				pointer-events: none;
+				background: rgba(15, 23, 42, 0.95);
+				color: #f8fafc;
+				padding: 0.45rem 0.6rem;
+				border-radius: 8px;
+				font-size: 0.85rem;
+				line-height: 1.2;
+				box-shadow: 0 12px 22px rgba(15, 23, 42, 0.25);
+				opacity: 0;
+				transform: translate(-50%, -120%);
+				transition: opacity 0.15s ease;
+				z-index: 10;
+			}
+
+			.doodle-frame {
+				will-change: transform, opacity;
+				perspective: 1200px;
+				transform-style: preserve-3d;
+			}
+
+			.venn-frame {
+				will-change: transform, opacity;
+				min-height: 90vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			.venn-circle {
+				fill-opacity: 0.42;
+				stroke: #0f172a;
+				stroke-width: 2.2;
+				vector-effect: non-scaling-stroke;
+				cursor: pointer;
+				transition: fill 0.3s ease, fill-opacity 0.3s ease;
+			}
+
+			.venn-label {
+				fill: #0f172a;
+				font-size: 1rem;
+				font-weight: 600;
+				text-anchor: middle;
+				dominant-baseline: middle;
+				paint-order: stroke fill;
+				stroke: rgba(15, 23, 42, 0.35);
+				stroke-width: 2px;
+				pointer-events: none;
+			}
+
+			.venn-intersection {
+				fill: #0f172a;
+				font-size: 0.92rem;
+				font-weight: 500;
+				text-anchor: middle;
+				dominant-baseline: middle;
+				pointer-events: none;
+			}
+
+			.doodle-frame svg {
+				cursor: pointer;
+				transform-origin: center;
+				backface-visibility: hidden;
+			}
+
+			.doodle-frame svg.flipping {
+				animation: doodle-flip 0.9s cubic-bezier(0.45, 0.05, 0.33, 1);
+			}
+
+			@keyframes doodle-flip {
+				0% {
+					transform: rotateY(0deg);
+				}
+				50% {
+					transform: rotateY(180deg);
+				}
+				100% {
+					transform: rotateY(360deg);
+				}
+			}
+
+			.axis path,
+			.axis line {
+				stroke: rgba(148, 163, 184, 0.4);
+			}
+
+			.axis text {
+				fill: #334155;
+				font-size: 0.85rem;
+			}
+
+			.axis-label {
+				fill: #475569;
+				font-size: 0.9rem;
+				letter-spacing: 0.04em;
+			}
+
+			.line {
+				fill: none;
+				stroke-linejoin: round;
+				stroke-linecap: round;
+				stroke-width: 1.8;
+				stroke-opacity: 0.9;
+				transition: stroke-opacity 0.2s ease, stroke-width 0.2s ease;
+			}
+
+			.area {
+				stroke: none;
+				fill-opacity: 0;
+				transition: fill-opacity 0.2s ease;
+			}
+
+			.legend text {
+				fill: #1f2937;
+				font-size: 0.95rem;
+				cursor: pointer;
+				transition: fill 0.2s ease;
+			}
+
+			.legend text:hover,
+			.legend text:focus-visible {
+				fill: #0f172a;
+			}
+
+			.legend-line {
+				stroke-width: 3;
+				stroke-linecap: round;
+			}
+
+			.legend-item {
+				outline: none;
+			}
+
+			.hover-target {
+				fill: none;
+				stroke: transparent;
+				stroke-width: 24;
+				cursor: pointer;
+			}
+
+			.grid-line {
+				stroke: rgba(148, 163, 184, 0.35);
+				stroke-width: 1;
+			}
+
+			.connection-line {
+				stroke: #111827;
+				stroke-width: 2;
+				stroke-linecap: round;
+			}
+
+			.connection-line.active {
+				stroke-width: 3.5;
+			}
+
+			.arrow-line {
+				fill: none;
+				stroke-width: 2.5;
+				stroke-dasharray: 8 6;
+			}
+
+			.grid-node {
+				fill: #2563eb;
+				stroke: #0f172a;
+				stroke-width: 2;
+				transition: transform 0.2s ease, fill 0.2s ease;
+				cursor: pointer;
+			}
+
+			.grid-node.active {
+				fill: #1d4ed8;
+				transform: scale(1.1);
+			}
+
+			.grid-label {
+				fill: #1f2937;
+				font-weight: 600;
+				font-size: 0.9rem;
+			}
+
+			.grid-label.active {
+				fill: #1d4ed8;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="page">
+			<div class="chart-frame">
+				<svg id="line-chart" role="img" aria-label="Weekly search interest by league"></svg>
+			</div>
+			<div class="note-tile" role="note" aria-label="Line chart design notes">
+				<p>
+					My initial prompt was: 
+					'Make a histogram using HTML, CSS, D3.JS that will get posted online through github actions. sportsdata.csv has the data that must be used.'
+				</p>
+				<p>
+					This took a very long time to load and provided a complicated graph with too much data, hence I added a new prompt to edit the existing code and remove unneccessary details.):
+					'I just need a chart that includes all of the data sets (f1, nba, nfll, premierLeague) instead of a bar chart, do a line chart that becomes an area graph when you hover the cursor over the specific data set. Do not add extra text, just keep the graph and its axis and data set'
+				</p>
+			</div>
+			<div class="chart-frame">
+				<svg
+					id="grid-chart"
+					role="img"
+					aria-label="Grid network view of energy states"
+				></svg>
+			</div>
+			<div class="note-tile" role="note" aria-label="Grid chart spacing update">
+				<p>
+					I spaced out the graphs more like this. also made the transition work better:
+					'the 2 graphs are too close to each other, causing the transition to activate too early. move the 2 graphs away from each other, and make the transition position dependent - i.e. start when the graph comes in to view and finish when it's fully in view.'
+				</p>
+			</div>
+			<div class="chart-frame venn-frame">
+				<svg
+					id="venn-chart"
+					role="img"
+					aria-label="Three-set Venn diagram comparing Laksa, Chilli Crab, and Nasi Lemak"
+				></svg>
+			</div>
+			<div class="note-tile" role="note" aria-label="Venn diagram transition note">
+				<p>
+					I struggled to orient the transition for the venn diagram correctly. It seems the LLM doesn't parse the directions correctly making the circles move in from the wrong sides, but it still looks ok.
+				</p>
+			</div>
+			<div class="chart-frame doodle-frame">
+				<svg
+					id="doodle-chart"
+					role="img"
+					aria-label="Interactive DoodleBob sketch"
+				></svg>
+			</div>
+			<div class="note-tile" role="note" aria-label="Doodle interaction note">
+				<p>
+					I initially wanted to have an interaction to color white areas on the sketch, but the LLM said:
+					'Vectorized, fillable SVG of doodlebob.png: Deferred - no vectorization tooling available in this environment.'
+				</p>
+			</div>
+			<div class="chart-frame">
+				<svg
+					id="sweden-temp-chart"
+					role="img"
+					aria-label="Monthly day and night temperatures in Sweden"
+				></svg>
+			</div>
+			<div class="note-tile" role="note" aria-label="Temperature chart decision">
+				<p>
+					Initially wanted to do celsius for temperature. However, the value goes below 0 making it not ideal and not look like the reference. Hence, went with Farenheit and gave me an idea for the interaction.
+				</p>
+			</div>
+		</div>
+
+		<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+		<script>
+			(function () {
+				const svg = d3.select("#line-chart");
+				const width = 1300;
+				const height = 640;
+				const margin = { top: 64, right: 220, bottom: 80, left: 72 };
+				const plotWidth = width - margin.left - margin.right;
+				const plotHeight = height - margin.top - margin.bottom;
+
+				const parseDate = d3.timeParse("%Y-%m-%d");
+
+				const seriesDefinitions = [
+					{ key: "f1", label: "F1", column: "f1: (Worldwide)" },
+					{ key: "nba", label: "NBA", column: "nba: (Worldwide)" },
+					{ key: "nfl", label: "NFL", column: "nfl: (Worldwide)" },
+					{ key: "premierLeague", label: "Premier League", column: "Premier League: (Worldwide)" }
+				];
+
+				const parseValue = (value) => {
+					const numeric = Number(value);
+					return Number.isFinite(numeric) ? numeric : NaN;
+				};
+
+				const color = d3
+					.scaleOrdinal()
+					.domain(seriesDefinitions.map((d) => d.key))
+					.range(["#1f77b4", "#d62728", "#2ca02c", "#ff7f0e"]);
+
+				const definedValue = (d) => Number.isFinite(d.value);
+
+				svg.attr("viewBox", `0 0 ${width} ${height}`).attr("preserveAspectRatio", "xMidYMid meet");
+
+				const root = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+				const defs = svg.append("defs");
+				const clipPathId = "line-chart-clip";
+				const clipRect = defs
+					.append("clipPath")
+					.attr("id", clipPathId)
+					.append("rect")
+					.attr("x", 0)
+					.attr("y", plotHeight)
+					.attr("width", plotWidth)
+					.attr("height", 0);
+
+				const xScale = d3.scaleTime().range([0, plotWidth]);
+				const yScale = d3.scaleLinear().range([plotHeight, 0]);
+
+				const lineBuilder = d3
+					.line()
+					.defined(definedValue)
+					.x((d) => xScale(d.date))
+					.y((d) => yScale(d.value));
+
+				const areaBuilder = d3
+					.area()
+					.defined(definedValue)
+					.x((d) => xScale(d.date))
+					.y0(plotHeight)
+					.y1((d) => yScale(d.value));
+
+				const areasLayer = root.append("g");
+				const linesLayer = root.append("g");
+				const hitLayer = root.append("g");
+
+				const xAxisGroup = root
+					.append("g")
+					.attr("class", "axis axis--x")
+					.attr("transform", `translate(0,${plotHeight})`);
+
+				const yAxisGroup = root.append("g").attr("class", "axis axis--y");
+
+				root
+					.append("text")
+					.attr("class", "axis-label")
+					.attr("x", plotWidth / 2)
+					.attr("y", plotHeight + margin.bottom - 28)
+					.attr("text-anchor", "middle")
+					.text("Week");
+
+				root
+					.append("text")
+					.attr("class", "axis-label")
+					.attr("x", -margin.left + 18)
+					.attr("y", -28)
+					.attr("text-anchor", "start")
+					.text("Search interest");
+
+				const legend = svg
+					.append("g")
+					.attr("class", "legend")
+					.attr("transform", `translate(${width - margin.right + 30},${margin.top})`);
+
+				let areaPaths;
+				let linePaths;
+
+				function cleanCsvLines(rawText) {
+					const lines = rawText.split(/\r?\n/).filter((line) => line.trim().length > 0);
+					const headerIndex = lines.findIndex((line) => line.startsWith("Week,"));
+					if (headerIndex === -1) {
+						throw new Error("Unable to locate CSV header in sportsdata.csv");
+					}
+					return lines.slice(headerIndex).join("\n");
+				}
+
+				function setActiveSeries(key) {
+					if (!linePaths || !areaPaths) return;
+					const hasKey = Boolean(key);
+					linePaths
+						.attr("stroke-opacity", (d) => (hasKey && d.key !== key ? 0.25 : 0.95))
+						.attr("stroke-width", (d) => (hasKey && d.key === key ? 2.7 : 1.8));
+					areaPaths.style("fill-opacity", (d) => (hasKey && d.key === key ? 0.4 : 0));
+				}
+
+				function resetActiveSeries() {
+					setActiveSeries(null);
+				}
+
+				function handleLegendKeyboard(event, key) {
+					if (event.key === "Enter" || event.key === " ") {
+						event.preventDefault();
+						setActiveSeries(key);
+					} else if (event.key === "Escape") {
+						resetActiveSeries();
+					}
+				}
+
+				d3.text("sportsdata.csv")
+					.then((rawText) => {
+						const cleanCsv = cleanCsvLines(rawText);
+						const parsedRows = d3
+							.csvParse(cleanCsv, (row) => ({
+								Week: parseDate(row.Week.trim()),
+								"f1: (Worldwide)": parseValue(row["f1: (Worldwide)"]),
+								"nba: (Worldwide)": parseValue(row["nba: (Worldwide)"]),
+								"nfl: (Worldwide)": parseValue(row["nfl: (Worldwide)"]),
+								"Premier League: (Worldwide)": parseValue(row["Premier League: (Worldwide)"])
+							}))
+							.filter((row) => row.Week instanceof Date && !Number.isNaN(row.Week.getTime()));
+
+						if (!parsedRows.length) {
+							return;
+						}
+
+						const seriesData = seriesDefinitions.map((definition) => ({
+							...definition,
+							values: parsedRows.map((row) => ({
+								date: row.Week,
+								value: Number.isFinite(row[definition.column]) ? row[definition.column] : NaN
+							}))
+						}));
+
+						const xDomain = d3.extent(parsedRows, (d) => d.Week);
+						xScale.domain(xDomain);
+
+						const allValues = seriesData
+							.flatMap((series) => series.values.map((d) => d.value))
+							.filter((value) => Number.isFinite(value));
+						const yMax = d3.max(allValues) || 1;
+						yScale.domain([0, yMax]).nice();
+
+						const xAxis = d3
+							.axisBottom(xScale)
+							.ticks(Math.min(12, Math.ceil(parsedRows.length / 8)))
+							.tickSizeOuter(0);
+						const yAxis = d3.axisLeft(yScale).ticks(6).tickSizeOuter(0);
+
+						xAxisGroup.call(xAxis);
+						yAxisGroup.call(yAxis);
+
+						areaPaths = areasLayer
+							.selectAll("path.area")
+							.data(seriesData, (d) => d.key)
+							.join("path")
+							.attr("class", "area")
+							.attr("fill", (d) => color(d.key))
+							.attr("d", (d) => areaBuilder(d.values))
+							.attr("clip-path", `url(#${clipPathId})`);
+
+						linePaths = linesLayer
+							.selectAll("path.line")
+							.data(seriesData, (d) => d.key)
+							.join("path")
+							.attr("class", "line")
+							.attr("stroke", (d) => color(d.key))
+							.attr("d", (d) => lineBuilder(d.values))
+							.attr("clip-path", `url(#${clipPathId})`);
+
+						clipRect
+							.transition()
+							.duration(1200)
+							.ease(d3.easeCubicOut)
+							.attr("y", 0)
+							.attr("height", plotHeight);
+
+						hitLayer
+							.selectAll("path.hover-target")
+							.data(seriesData, (d) => d.key)
+							.join("path")
+							.attr("class", "hover-target")
+							.attr("d", (d) => lineBuilder(d.values))
+							.attr("tabindex", 0)
+							.on("mouseenter focus", (event, d) => setActiveSeries(d.key))
+							.on("mouseleave blur", resetActiveSeries)
+							.on("keydown", (event, d) => handleLegendKeyboard(event, d.key));
+
+						const legendItems = legend
+							.selectAll("g.legend-item")
+							.data(seriesData, (d) => d.key)
+							.join((enter) => {
+								const g = enter
+									.append("g")
+									.attr("class", "legend-item")
+									.attr("tabindex", 0);
+
+								g.append("line")
+									.attr("class", "legend-line")
+									.attr("x1", 0)
+									.attr("x2", 28)
+									.attr("y1", 0)
+									.attr("y2", 0);
+
+								g.append("text")
+									.attr("x", 36)
+									.attr("y", 0)
+									.attr("dominant-baseline", "middle");
+
+								return g;
+							});
+
+						legendItems
+							.attr("transform", (d, i) => `translate(0, ${i * 28})`)
+							.select("line.legend-line")
+							.attr("stroke", (d) => color(d.key));
+
+						legendItems
+							.select("text")
+							.text((d) => d.label);
+
+						legendItems
+							.on("mouseenter focus", (event, d) => setActiveSeries(d.key))
+							.on("mouseleave blur", resetActiveSeries)
+							.on("keydown", (event, d) => handleLegendKeyboard(event, d.key));
+
+						resetActiveSeries();
+						svg.on("mouseleave", resetActiveSeries);
+					})
+					.catch((error) => {
+						console.error(error);
+					});
+			})();
+            
+			(function () {
+				const columns = 5;
+				const rows = 12;
+				const width = 1220;
+				const height = 400;
+				const margin = { top: 36, right: 200, bottom: 42, left: 80 };
+				const plotWidth = width - margin.left - margin.right;
+				const plotHeight = height - margin.top - margin.bottom;
+
+				const svg = d3
+					.select("#grid-chart")
+					.attr("viewBox", `0 0 ${width} ${height}`)
+					.attr("preserveAspectRatio", "xMidYMid meet");
+
+				const root = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+				const cellWidth = plotWidth / (columns - 1);
+				const cellHeight = plotHeight / (rows - 1);
+
+				const nodes = [
+					{ id: "ea2", label: "eᵃ₂", col: 2, row: 3 },
+					{ id: "ea1", label: "eᵃ₁", col: 2, row: 8 },
+					{ id: "eb2", label: "eᵇ₂", col: 4, row: 4 },
+					{ id: "eb1", label: "eᵇ₁", col: 4, row: 6 }
+				].map((node) => ({
+					...node,
+					x: (node.col - 1) * cellWidth,
+					y: (node.row - 1) * cellHeight
+				}));
+
+				const connections = [
+					{ source: "ea2", target: "ea1" },
+					{ source: "ea2", target: "eb2" },
+					{ source: "eb1", target: "ea1" },
+					{ source: "eb1", target: "eb2" }
+				];
+
+				const arrows = [
+					{ source: "ea2", target: "eb1", color: "#60a5fa" },
+					{ source: "ea1", target: "eb2", color: "#1e3a8a" }
+				];
+
+				const markers = svg.append("defs");
+
+				arrows.forEach((arrow, index) => {
+					markers
+						.append("marker")
+						.attr("id", `arrow-head-${index}`)
+						.attr("viewBox", "0 -4 8 8")
+						.attr("refX", 8)
+						.attr("refY", 0)
+						.attr("markerWidth", 8)
+						.attr("markerHeight", 8)
+						.attr("orient", "auto")
+						.append("path")
+						.attr("d", "M0,-4L8,0L0,4")
+						.attr("fill", arrow.color);
+				});
+
+				root
+					.selectAll("line.grid-line.horizontal")
+					.data(d3.range(rows))
+					.join("line")
+					.attr("class", "grid-line horizontal")
+					.attr("x1", 0)
+					.attr("x2", plotWidth)
+					.attr("y1", (d) => d * cellHeight)
+					.attr("y2", (d) => d * cellHeight);
+
+				root
+					.selectAll("line.grid-line.vertical")
+					.data(d3.range(columns))
+					.join("line")
+					.attr("class", "grid-line vertical")
+					.attr("x1", (d) => d * cellWidth)
+					.attr("x2", (d) => d * cellWidth)
+					.attr("y1", 0)
+					.attr("y2", plotHeight);
+
+				const connectionGroup = root.append("g");
+				const arrowGroup = root.append("g");
+				const nodeGroup = root.append("g");
+				const labelGroup = root.append("g");
+
+				function nodeById(id) {
+					return nodes.find((node) => node.id === id);
+				}
+
+				connectionGroup
+					.selectAll("line.connection-line")
+					.data(connections)
+					.join("line")
+					.attr("class", "connection-line")
+					.attr("x1", (d) => nodeById(d.source).x)
+					.attr("y1", (d) => nodeById(d.source).y)
+					.attr("x2", (d) => nodeById(d.target).x)
+					.attr("y2", (d) => nodeById(d.target).y);
+
+				arrowGroup
+					.selectAll("line.arrow-line")
+					.data(arrows.map((arrow, index) => ({ ...arrow, markerId: `arrow-head-${index}` })))
+					.join("line")
+					.attr("class", "arrow-line")
+					.attr("stroke", (d) => d.color)
+					.attr("marker-end", (d) => `url(#${d.markerId})`)
+					.attr("x1", (d) => nodeById(d.source).x)
+					.attr("y1", (d) => nodeById(d.source).y)
+					.attr("x2", (d) => nodeById(d.target).x)
+					.attr("y2", (d) => nodeById(d.target).y);
+
+				const nodeElements = nodeGroup
+					.selectAll("circle.grid-node")
+					.data(nodes)
+					.join("circle")
+					.attr("class", "grid-node")
+					.attr("r", 9)
+					.attr("cx", plotWidth / 2)
+					.attr("cy", -40)
+					.each(function (d) {
+						d.finalX = d.x;
+						d.finalY = d.y;
+					});
+
+				const labelElements = labelGroup
+					.selectAll("text.grid-label")
+					.data(nodes)
+					.join("text")
+					.attr("class", "grid-label")
+					.attr("x", (d) => d.x + 14)
+					.attr("y", (d) => d.y - 12)
+					.text((d) => d.label)
+					.style("opacity", 0);
+
+				const enhancedNodes = nodeGroup.selectAll("circle.grid-node");
+
+				function setActive(id) {
+					enhancedNodes.classed("active", (d) => d.id === id);
+					labelGroup.selectAll("text.grid-label").classed("active", (d) => d.id === id);
+					connectionGroup
+						.selectAll("line.connection-line")
+						.classed("active", (d) => d.source === id || d.target === id);
+				}
+
+				function resetActive() {
+					enhancedNodes.classed("active", false);
+					labelGroup.selectAll("text.grid-label").classed("active", false);
+					connectionGroup.selectAll("line.connection-line").classed("active", false);
+				}
+
+				enhancedNodes
+					.on("mouseenter", (_, d) => setActive(d.id))
+					.on("mouseleave", resetActive)
+					.on("focus", (_, d) => setActive(d.id))
+					.on("blur", resetActive)
+					.attr("tabindex", 0)
+					.append("title")
+					.text((d) => d.label);
+
+				function playAnimation(progress) {
+					const eased = d3.easeCubicOut(progress);
+					nodeElements
+						.attr("cx", (d) => (1 - eased) * (plotWidth / 2) + eased * d.finalX)
+						.attr("cy", (d) => (1 - eased) * -40 + eased * d.finalY);
+
+					labelElements.style("opacity", Math.max(0, Math.min(1, eased)));
+				}
+
+				const observer = new IntersectionObserver(
+					(entries) => {
+						entries.forEach((entry) => {
+							const startThreshold = 0.25;
+							const ratio = entry.intersectionRatio || 0;
+							const adjustedProgress = Math.max(0, Math.min(1, (ratio - startThreshold) / (1 - startThreshold)));
+							playAnimation(adjustedProgress);
+							if (adjustedProgress >= 1) {
+								observer.unobserve(entry.target);
+							}
+						});
+					},
+					{
+						root: null,
+						rootMargin: "0px",
+						threshold: Array.from({ length: 21 }, (_, i) => i / 20)
+					}
+				);
+
+				observer.observe(document.querySelector("#grid-chart"));
+			})();
+
+				(function () {
+					const frame = document.querySelector(".venn-frame");
+					const svg = d3.select("#venn-chart");
+					if (!frame || svg.empty()) return;
+
+					frame.style.transform = "translateY(48px)";
+					frame.style.opacity = "0";
+
+					let updateEntryProgress = () => {};
+
+					const slideObserver = new IntersectionObserver(
+						(entries) => {
+							entries.forEach((entry) => {
+								const start = 0.2;
+								const ratio = entry.intersectionRatio || 0;
+								const progress = Math.max(0, Math.min(1, (ratio - start) / (1 - start)));
+								const translate = (1 - progress) * 48;
+								frame.style.transform = `translateY(${translate}px)`;
+								frame.style.opacity = progress.toFixed(3);
+								updateEntryProgress(progress);
+								if (progress >= 1) {
+									slideObserver.unobserve(entry.target);
+								}
+							});
+						},
+						{
+							threshold: Array.from({ length: 21 }, (_, i) => i / 20)
+						}
+					);
+
+					slideObserver.observe(frame);
+
+					const width = 720;
+					const height = 520;
+					svg
+						.attr("viewBox", `0 0 ${width} ${height}`)
+						.attr("preserveAspectRatio", "xMidYMid meet")
+						.attr("tabindex", 0)
+						.attr("focusable", true);
+
+					const sizeScale = 1.4;
+
+					const entryAngles = {
+						laksa: 0,
+						chilliCrab: 120,
+						nasiLemak: 240
+					};
+
+					const items = [
+						{ key: "laksa", label: "Laksa", color: "#fb923c" },
+						{ key: "chilliCrab", label: "Chilli Crab", color: "#f472b6" },
+						{ key: "nasiLemak", label: "Nasi Lemak", color: "#4ade80" }
+					].map((item) => ({
+						...item,
+						length: item.label.replace(/\s+/g, "").length,
+						entryAngleDeg: entryAngles[item.key],
+						entryAngleRad: (entryAngles[item.key] / 180) * Math.PI
+					}));
+
+					const baseRadius = 70 * sizeScale;
+					const scalePerLetter = 6 * sizeScale;
+
+					items.forEach((item) => {
+						item.radius = baseRadius + item.length * scalePerLetter;
+					});
+
+					const circlesByKey = Object.fromEntries(items.map((item) => [item.key, item]));
+
+					const targetPairOverlap = 5200 * sizeScale * sizeScale;
+
+					function intersectionArea(r1, r2, d) {
+						if (d >= r1 + r2) return 0;
+						if (d <= Math.abs(r1 - r2)) {
+							const minR = Math.min(r1, r2);
+							return Math.PI * minR * minR;
+						}
+						const alpha = Math.acos((d * d + r1 * r1 - r2 * r2) / (2 * d * r1));
+						const beta = Math.acos((d * d + r2 * r2 - r1 * r1) / (2 * d * r2));
+						const term = (-d + r1 + r2) * (d + r1 - r2) * (d - r1 + r2) * (d + r1 + r2);
+						return r1 * r1 * alpha + r2 * r2 * beta - 0.5 * Math.sqrt(Math.max(0, term));
+					}
+
+					function distanceForOverlap(r1, r2, target) {
+						const maxPossible = Math.PI * Math.min(r1, r2) * Math.min(r1, r2);
+						const clampedTarget = Math.max(50, Math.min(target, maxPossible * 0.92));
+						let low = Math.max(Math.abs(r1 - r2) + 0.001, 0.001);
+						let high = r1 + r2 - 0.001;
+						let mid = high;
+						for (let i = 0; i < 60; i++) {
+							mid = (low + high) / 2;
+							const area = intersectionArea(r1, r2, mid);
+							if (area > clampedTarget) {
+								low = mid;
+							} else {
+								high = mid;
+							}
+						}
+						return mid;
+					}
+
+					const dLaksaCrab = distanceForOverlap(circlesByKey.laksa.radius, circlesByKey.chilliCrab.radius, targetPairOverlap);
+					const dLaksaNasi = distanceForOverlap(circlesByKey.laksa.radius, circlesByKey.nasiLemak.radius, targetPairOverlap);
+					const dCrabNasi = distanceForOverlap(circlesByKey.chilliCrab.radius, circlesByKey.nasiLemak.radius, targetPairOverlap);
+
+					const laksaCenter = {
+						x: width / 2 - dLaksaCrab / 2,
+						y: height / 2 + 36
+					};
+
+					const chilliCrabCenter = {
+						x: laksaCenter.x + dLaksaCrab,
+						y: laksaCenter.y
+					};
+
+					const xNasi = (dLaksaNasi * dLaksaNasi - dCrabNasi * dCrabNasi + dLaksaCrab * dLaksaCrab) / (2 * dLaksaCrab);
+					const ySquared = Math.max(0, dLaksaNasi * dLaksaNasi - xNasi * xNasi);
+					const nasiLemakCenter = {
+						x: laksaCenter.x + xNasi,
+						y: laksaCenter.y - Math.sqrt(ySquared)
+					};
+
+					circlesByKey.laksa.center = laksaCenter;
+					circlesByKey.chilliCrab.center = chilliCrabCenter;
+					circlesByKey.nasiLemak.center = nasiLemakCenter;
+
+					const margin = 36 * sizeScale;
+
+					function computeBounds() {
+						let minX = Infinity;
+						let maxX = -Infinity;
+						let minY = Infinity;
+						let maxY = -Infinity;
+						items.forEach((item) => {
+							const center = circlesByKey[item.key].center;
+							minX = Math.min(minX, center.x - item.radius);
+							maxX = Math.max(maxX, center.x + item.radius);
+							minY = Math.min(minY, center.y - item.radius);
+							maxY = Math.max(maxY, center.y + item.radius);
+						});
+						return { minX, maxX, minY, maxY };
+					}
+
+					const bounds = computeBounds();
+					let shiftX = width / 2 - (bounds.minX + bounds.maxX) / 2;
+					let shiftY = height / 2 - (bounds.minY + bounds.maxY) / 2;
+
+					if (bounds.minX + shiftX < margin) {
+						shiftX += margin - (bounds.minX + shiftX);
+					}
+					if (bounds.maxX + shiftX > width - margin) {
+						shiftX -= (bounds.maxX + shiftX) - (width - margin);
+					}
+					if (bounds.minY + shiftY < margin) {
+						shiftY += margin - (bounds.minY + shiftY);
+					}
+					if (bounds.maxY + shiftY > height - margin) {
+						shiftY -= (bounds.maxY + shiftY) - (height - margin);
+					}
+
+					if (shiftX !== 0 || shiftY !== 0) {
+						items.forEach((item) => {
+							const center = circlesByKey[item.key].center;
+							center.x += shiftX;
+							center.y += shiftY;
+						});
+						laksaCenter.x += shiftX;
+						laksaCenter.y += shiftY;
+						chilliCrabCenter.x += shiftX;
+						chilliCrabCenter.y += shiftY;
+						nasiLemakCenter.x += shiftX;
+						nasiLemakCenter.y += shiftY;
+					}
+
+					const balancedBounds = computeBounds();
+					const topGap = balancedBounds.minY;
+					const bottomGap = height - balancedBounds.maxY;
+					let balanceShift = (bottomGap - topGap) / 2;
+
+					if (balanceShift !== 0) {
+						const maxDown = bottomGap - margin;
+						const maxUp = topGap - margin;
+						if (balanceShift > 0) {
+							balanceShift = Math.min(balanceShift, maxDown);
+						} else {
+							balanceShift = Math.max(balanceShift, -maxUp);
+						}
+
+						if (Math.abs(balanceShift) > 0.1) {
+							items.forEach((item) => {
+								const center = circlesByKey[item.key].center;
+								center.y += balanceShift;
+							});
+							laksaCenter.y += balanceShift;
+							chilliCrabCenter.y += balanceShift;
+							nasiLemakCenter.y += balanceShift;
+						}
+					}
+
+					const defs = svg.append("defs");
+					const root = svg.append("g");
+
+					root
+						.append("desc")
+						.text("Circle areas correspond to word length; overlaps show shared qualities between Laksa, Chilli Crab, and Nasi Lemak.");
+
+					const photoSources = {
+						laksa: "laksa.jpg",
+						chilliCrab: "chillicrab.jpg",
+						nasiLemak: "nasilemak.jpg"
+					};
+
+					const photoPatterns = defs
+						.selectAll("pattern.venn-photo")
+						.data(items)
+						.join("pattern")
+						.attr("class", "venn-photo")
+						.attr("id", (d) => `venn-photo-${d.key}`)
+						.attr("patternUnits", "objectBoundingBox")
+						.attr("patternContentUnits", "objectBoundingBox")
+						.attr("width", 1)
+						.attr("height", 1);
+
+					photoPatterns
+						.selectAll("image")
+						.data((d) => [d])
+						.join("image")
+						.attr("href", (d) => photoSources[d.key])
+						.attr("xlink:href", (d) => photoSources[d.key])
+						.attr("x", 0)
+						.attr("y", 0)
+						.attr("width", 1)
+						.attr("height", 1)
+						.attr("preserveAspectRatio", "xMidYMid slice");
+
+					const circlesGroup = root.append("g");
+					const labelsGroup = root.append("g");
+					const intersectionsGroup = root.append("g");
+
+					const circleSelection = circlesGroup
+						.selectAll("circle")
+						.data(items)
+						.join("circle")
+						.attr("class", "venn-circle")
+						.attr("fill", (d) => d.color)
+						.attr("cx", (d) => circlesByKey[d.key].center.x)
+						.attr("cy", (d) => circlesByKey[d.key].center.y)
+						.attr("r", (d) => d.radius);
+
+					const labelSelection = labelsGroup
+						.selectAll("text.venn-label")
+						.data(items)
+						.join("text")
+						.attr("class", "venn-label")
+						.attr("x", (d) => circlesByKey[d.key].center.x)
+						.attr("y", (d) => circlesByKey[d.key].center.y)
+						.text((d) => d.label);
+
+					function setPhotoState(key, active) {
+						circleSelection
+							.filter((d) => d.key === key)
+							.attr("fill", (d) => (active ? `url(#venn-photo-${d.key})` : d.color))
+							.style("fill-opacity", active ? 1 : null);
+
+						labelSelection
+							.filter((d) => d.key === key)
+							.style("fill", active ? "#f8fafc" : "#0f172a")
+							.style("stroke", active ? "rgba(15, 23, 42, 0.6)" : "rgba(15, 23, 42, 0.35)");
+					}
+
+					circleSelection
+						.attr("tabindex", 0)
+						.attr("role", "img")
+						.attr("aria-label", (d) => `${d.label} circle. Hover or focus to view photo.`)
+						.on("mouseenter", (event, d) => setPhotoState(d.key, true))
+						.on("mouseleave", (event, d) => setPhotoState(d.key, false))
+						.on("focus", (event, d) => setPhotoState(d.key, true))
+						.on("blur", (event, d) => setPhotoState(d.key, false));
+
+					const pairIntersections = [
+						{
+							keys: ["laksa", "nasiLemak"],
+							label: "Malay",
+							offsetY: 10,
+							offsetX: 0
+						},
+						{
+							keys: ["laksa", "chilliCrab"],
+							label: "Seafood",
+							offsetY: 10,
+							offsetX: -28
+						},
+						{
+							keys: ["nasiLemak", "chilliCrab"],
+							label: "Chilli",
+							offsetY: 10,
+							offsetX: 0
+						}
+					];
+
+					pairIntersections.forEach((intersection) => {
+						const [keyA, keyB] = intersection.keys;
+						const centerA = circlesByKey[keyA].center;
+						const centerB = circlesByKey[keyB].center;
+						intersection.x = (centerA.x + centerB.x) / 2 + (intersection.offsetX || 0);
+						intersection.y = (centerA.y + centerB.y) / 2 + intersection.offsetY;
+					});
+
+					const centerAll = {
+						x: (laksaCenter.x + chilliCrabCenter.x + nasiLemakCenter.x) / 3,
+						y: (laksaCenter.y + chilliCrabCenter.y + nasiLemakCenter.y) / 3 + 14
+					};
+
+					const intersectionTexts = [
+						...pairIntersections,
+						{ keys: ["laksa", "chilliCrab", "nasiLemak"], label: "Singapore", x: centerAll.x, y: centerAll.y }
+					];
+
+					const intersectionSelection = intersectionsGroup
+						.selectAll("text.venn-intersection")
+						.data(intersectionTexts)
+						.join("text")
+						.attr("class", "venn-intersection")
+						.attr("x", (d) => d.x)
+						.attr("y", (d) => d.y)
+						.text((d) => d.label);
+
+					const entryDistance = 260 * sizeScale;
+
+					updateEntryProgress = (progress) => {
+						const eased = d3.easeCubicOut(progress);
+						circleSelection
+							.attr("transform", (d) => {
+								const offset = (1 - eased) * entryDistance;
+								if (offset < 0.5) return null;
+								const dx = Math.cos(d.entryAngleRad) * offset;
+								const dy = Math.sin(d.entryAngleRad) * offset;
+								return `translate(${dx}, ${dy})`;
+							})
+							.style("opacity", Math.max(0.35, eased));
+
+						labelSelection
+							.attr("transform", (d) => {
+								const offset = (1 - eased) * entryDistance;
+								if (offset < 0.5) return null;
+								const dx = Math.cos(d.entryAngleRad) * offset;
+								const dy = Math.sin(d.entryAngleRad) * offset;
+								return `translate(${dx}, ${dy})`;
+							})
+							.style("opacity", eased);
+
+						intersectionSelection.style("opacity", Math.max(0, Math.min(1, (eased - 0.35) / 0.65)));
+					};
+
+					updateEntryProgress(0);
+
+					svg.append("title").text("Press Enter or Space to highlight the Singapore commonality");
+
+					svg.on("keydown", (event) => {
+						if (event.key === "Enter" || event.key === " ") {
+							event.preventDefault();
+							const central = intersectionsGroup.selectAll("text").filter((d) => d.label === "Singapore");
+							central
+								.transition()
+								.duration(450)
+								.ease(d3.easeCubicOut)
+								.style("font-weight", 700)
+								.style("letter-spacing", "0.04em")
+								.transition()
+								.duration(450)
+								.ease(d3.easeCubicIn)
+								.style("font-weight", 500)
+								.style("letter-spacing", "0em");
+						}
+					});
+				})();
+
+				(function () {
+					const frame = document.querySelector(".doodle-frame");
+					const svg = d3.select("#doodle-chart");
+					if (!frame || svg.empty()) return;
+
+					frame.style.transform = "translateX(35%)";
+					frame.style.opacity = "0";
+
+					const slideObserver = new IntersectionObserver(
+						(entries) => {
+							entries.forEach((entry) => {
+								const start = 0.2;
+								const ratio = entry.intersectionRatio || 0;
+								const progress = Math.max(0, Math.min(1, (ratio - start) / (1 - start)));
+								const translate = (1 - progress) * 35;
+								frame.style.transform = `translateX(${translate}%)`;
+								frame.style.opacity = progress.toFixed(3);
+								if (progress >= 1) {
+									slideObserver.unobserve(entry.target);
+								}
+							});
+						},
+						{
+							threshold: Array.from({ length: 21 }, (_, i) => i / 20)
+						}
+					);
+
+					slideObserver.observe(frame);
+
+					svg
+						.attr("viewBox", "0 0 360 360")
+						.attr("preserveAspectRatio", "xMidYMid meet")
+						.attr("tabindex", 0)
+						.attr("focusable", true);
+
+					svg
+						.append("image")
+						.attr("href", "doodlebob.png")
+						.attr("xlink:href", "doodlebob.png")
+						.attr("x", 0)
+						.attr("y", 0)
+						.attr("width", 360)
+						.attr("height", 360)
+						.attr("preserveAspectRatio", "xMidYMid slice")
+						.append("title")
+						.text("DoodleBob sketch");
+
+					const svgNode = svg.node();
+					if (!svgNode) return;
+
+					function triggerFlip() {
+						if (svgNode.classList.contains("flipping")) return;
+						svgNode.classList.add("flipping");
+					}
+
+					svg.on("click", () => {
+						triggerFlip();
+					});
+
+					svg.on("keydown", (event) => {
+						if (event.key === "Enter" || event.key === " ") {
+							event.preventDefault();
+							triggerFlip();
+						}
+					});
+
+					svgNode.addEventListener("animationend", () => {
+						svgNode.classList.remove("flipping");
+					});
+
+					svg.append("title").text("Activate to flip the doodle");
+				})();
+
+				(function () {
+					const svg = d3.select("#sweden-temp-chart");
+					if (svg.empty()) return;
+
+					const width = 1220;
+					const height = 420;
+					const margin = { top: 56, right: 120, bottom: 96, left: 80 };
+					const chartWidth = width - margin.left - margin.right;
+					const chartHeight = height - margin.top - margin.bottom;
+
+					svg
+						.attr("viewBox", `0 0 ${width} ${height}`)
+						.attr("preserveAspectRatio", "xMidYMid meet");
+
+					const root = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+					const x0 = d3.scaleBand().range([0, chartWidth]).padding(0.32);
+					const x1 = d3.scaleBand().padding(0.18);
+					const y = d3.scaleLinear().range([chartHeight, 0]);
+					const seriesKeys = ["Day", "Night"];
+					const color = d3
+						.scaleOrdinal()
+						.domain(seriesKeys)
+						.range(["#f97316", "#2563eb"]);
+					const formatCelsius = d3.format(".1f");
+
+					const xAxisGroup = root
+						.append("g")
+						.attr("class", "axis axis--x")
+						.attr("transform", `translate(0,${chartHeight})`);
+
+					const yAxisGroup = root.append("g").attr("class", "axis axis--y");
+
+					root
+						.append("text")
+						.attr("class", "axis-label")
+						.attr("x", chartWidth / 2)
+						.attr("y", chartHeight + margin.bottom - 36)
+						.attr("text-anchor", "middle")
+						.text("Months");
+
+					root
+						.append("text")
+						.attr("class", "axis-label")
+						.attr("transform", "rotate(-90)")
+						.attr("x", -chartHeight / 2)
+						.attr("y", -margin.left + 20)
+						.attr("text-anchor", "middle")
+						.text("Temperature (°F)");
+
+					const tooltip = d3
+						.select("body")
+						.append("div")
+						.attr("class", "sweden-temp-tooltip")
+						.style("opacity", 0);
+
+					let barSelection = null;
+					let observerHasTriggered = false;
+					let dataReady = false;
+
+					function fahrenheitToCelsius(value) {
+						return ((value - 32) * 5) / 9;
+					}
+
+					function animateBars() {
+						if (!barSelection || observerHasTriggered) return;
+						observerHasTriggered = true;
+						barSelection
+							.transition()
+							.duration(900)
+							.delay((_, i) => i * 60)
+							.ease(d3.easeCubicOut)
+							.attr("y", (d) => y(d.value))
+							.attr("height", (d) => chartHeight - y(d.value))
+							.style("opacity", 1);
+					}
+
+					function positionTooltip(event, target) {
+						let x = event.clientX;
+						let y = event.clientY;
+						if (!Number.isFinite(x) || !Number.isFinite(y)) {
+							const rect = target.getBoundingClientRect();
+							x = rect.left + rect.width / 2;
+							y = rect.top + rect.height / 2;
+						}
+						tooltip.style("left", `${x}px`).style("top", `${y - 16}px`);
+					}
+
+					function showTooltip(event, datum) {
+						const celsius = fahrenheitToCelsius(datum.value);
+						tooltip
+							.html(
+								`<strong>${datum.month}</strong><br />${datum.key}: ${formatCelsius(celsius)}°C`
+							)
+							.style("opacity", 1);
+						positionTooltip(event, event.currentTarget);
+					}
+
+					function hideTooltip() {
+						tooltip.style("opacity", 0);
+					}
+
+					d3.csv("swedentemp.csv").then((data) => {
+						data.forEach((row) => {
+							seriesKeys.forEach((key) => {
+								row[key] = Number(row[key]);
+							});
+						});
+
+						const months = data.map((d) => d.Month);
+						x0.domain(months);
+						x1.domain(seriesKeys).range([0, x0.bandwidth()]);
+						const maxTemp = d3.max(data, (d) => d3.max(seriesKeys, (key) => d[key]));
+						y.domain([0, maxTemp || 1]).nice();
+
+						xAxisGroup.call(d3.axisBottom(x0).tickSizeOuter(0));
+						yAxisGroup.call(d3.axisLeft(y).ticks(6).tickSizeOuter(0));
+
+						const groups = root
+							.selectAll("g.month-group")
+							.data(data)
+							.join("g")
+							.attr("class", "month-group")
+							.attr("transform", (d) => `translate(${x0(d.Month)},0)`);
+
+						barSelection = groups
+							.selectAll("rect.bar")
+							.data((d) =>
+								seriesKeys.map((key) => ({
+									key,
+									month: d.Month,
+									value: d[key]
+								}))
+							)
+							.join("rect")
+							.attr("class", (d) => `bar bar-${d.key.toLowerCase()}`)
+							.attr("x", (d) => x1(d.key))
+							.attr("width", x1.bandwidth())
+							.attr("y", chartHeight)
+							.attr("height", 0)
+							.attr("rx", 8)
+							.attr("ry", 8)
+							.style("opacity", 0)
+							.attr("tabindex", 0)
+							.on("mouseenter focus", (event, d) => showTooltip(event, d))
+							.on("mousemove", (event) => positionTooltip(event, event.currentTarget))
+							.on("mouseleave blur", hideTooltip);
+
+						const legend = svg
+							.append("g")
+							.attr("class", "sweden-temp-legend")
+							.attr("transform", `translate(${width - margin.right + 10}, ${margin.top - 24})`);
+
+						const legendItems = legend
+							.selectAll("g.legend-item")
+							.data(seriesKeys, (d) => d)
+							.join((enter) => {
+								const g = enter
+									.append("g")
+									.attr("class", "legend-item");
+
+								g.append("rect");
+								g.append("text");
+								return g;
+							});
+
+						legendItems.attr("transform", (_, i) => `translate(0, ${i * 26})`);
+
+						legendItems
+							.select("rect")
+							.attr("fill", (d) => color(d));
+
+						legendItems
+							.select("text")
+							.attr("x", 26)
+							.attr("y", 9)
+							.attr("dominant-baseline", "middle")
+							.text((d) => d);
+
+						dataReady = true;
+						if (observerHasTriggered) {
+							// observer already fired before data loaded; animate immediately
+							observerHasTriggered = false;
+							animateBars();
+						}
+					});
+
+					const observer = new IntersectionObserver(
+						(entries) => {
+							entries.forEach((entry) => {
+								if (entry.isIntersecting) {
+									if (dataReady) {
+										animateBars();
+									} else {
+										observerHasTriggered = true;
+									}
+									observer.unobserve(entry.target);
+								}
+							});
+						},
+						{
+							threshold: [0.25]
+						}
+					);
+
+					const node = svg.node();
+					if (node) {
+						observer.observe(node);
+					}
+				})();
+		</script>
+	</body>
+</html>

@@ -61,6 +61,49 @@
             gap: 1.5rem;
         }
 
+        .overview-card {
+            max-width: 1200px;
+            margin: 1.5rem auto 0;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid rgba(244, 114, 182, 0.35);
+            box-shadow: 0 20px 40px rgba(244, 114, 182, 0.18);
+        }
+
+        .overview-card h2 {
+            margin: 0 0 0.75rem;
+            font-size: 1.2rem;
+            color: #9d174d;
+        }
+
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+
+        .overview-item {
+            padding: 0.9rem 1rem;
+            border-radius: 16px;
+            background: #fff1f2;
+            border: 1px solid #fecdd3;
+        }
+
+        .overview-item h3 {
+            margin: 0 0 0.4rem;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #be123c;
+        }
+
+        .overview-item p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #4b5563;
+        }
+
         .side-nav {
             position: sticky;
             top: 1rem;
@@ -226,6 +269,28 @@
             </div>
         </div>
     </header>
+
+    <section class="overview-card" aria-labelledby="overview-title">
+        <h2 id="overview-title">Project snapshot</h2>
+        <div class="overview-grid">
+            <div class="overview-item">
+                <h3>What's inside</h3>
+                <p>The four assignment pages sit inside this single site as iframes, so you can open PSI data, SVG logos, D3 sketches, and the adversarial heatmap without leaving the page.</p>
+            </div>
+            <div class="overview-item">
+                <h3>How I merged them</h3>
+                <p>I kept every original <code>index.html</code> untouched in its folder and embedded each one into the main layout. This kept their CSS/JS isolated while giving the site one navigation bar and shared styling.</p>
+            </div>
+            <div class="overview-item">
+                <h3>Difficulties</h3>
+                <p>Assignments 3 and 4 refused to show up at first because they were not being included in the deployed bundle.</p>
+            </div>
+            <div class="overview-item">
+                <h3>How it was solved</h3>
+                <p>I updated the deployment copy step to include every assignment folder and re-tested the HTML linting so the GitHub Pages workflow could deploy the full site.</p>
+            </div>
+        </div>
+    </section>
 
     <div class="layout">
         <nav class="side-nav" aria-label="Jump to assignment">
